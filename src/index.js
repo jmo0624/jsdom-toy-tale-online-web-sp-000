@@ -1,122 +1,100 @@
-const addBtn = document.querySelector('#new-toy-btn');
-const toyForm = document.querySelector('.container')	const toyForm = document.querySelector('.container');
-let addToy = false	let addToy = false;
+let addToy = false;
 
-// YOUR CODE HERE	
+document.addEventListener("DOMContentLoaded", () => {
+  const toys = fetchToys().then(toys => toys.forEach(toy => renderToy(toy)));
 
-addBtn.addEventListener('click', () => {	addBtn.addEventListener('click', () => {
-  // hide & seek with the form	  // hide & seek with the form
-  addToy = !addToy	  addToy = !addToy
-@@ -12,7 +10,110 @@ addBtn.addEventListener('click', () => {
-  } else {	  } else {
-    toyForm.style.display = 'none'	    toyForm.style.display = 'none'
-  }	  }
-})	});
+  const addBtn = document.querySelector("#new-toy-btn");
+  const toyFormContainer = document.querySelector(".container");
+  const toyForm = document.querySelector(".add-toy-form");
 
-// Challenge 1 <<<<<<<<<<<<<>>>>>>>>>>>>>>>
-// When the page loads, fetch all toys.
-document.addEventListener('DOMContentLoad', fetchToys());
+  addBtn.addEventListener("click", () => {
+    // hide & seek with the form
+    addToy = !addToy;
+    if (addToy) {
+      toyFormContainer.style.display = "block";
+      toyForm.addEventListener('submit', event => {
+        event.preventDefault()
+        postToy(event.target)
+        event.target.reset();
+      })
+    } else {
+      toyFormContainer.style.display = "none";
+    }
+  });
 
-// GET fetch all toy objects.
+
+});
+
 function fetchToys() {
-  fetch("http://localhost:3000/toys")
-    .then(response => response.json())
-    .then(json => createCard(json))
+  return fetch("http://localhost:3000/toys")
+    .then(resp => resp.json())
 }
 
-function createCard(json) {
-  const collection = document.querySelector('div#toy-collection');
-  // for each toy
-  for (const toy of json) {
-    let newDiv = document.createElement('div') // create div
-    newDiv.className = "card" // with class = "card"
-    createName(toy, newDiv)
-    createPhoto(toy, newDiv)
-    totalLikes(toy, newDiv)
-    addButton(toy, newDiv)
-    collection.appendChild(newDiv); // append to toyCollection
-  }
-}
+function renderToy(toy) {
+  const collection = document.getElementById("toy-collection");
+  const card = document.createElement("div");
+  const h2 = document.createElement("h2");
+  const img = document.createElement("img");
+  const p = document.createElement("p");
+  const btn = document.createElement("button");
 
-// Challenge 2 <<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>
-// h2 tag with the toy's name
-function createName(toy, card) {
-  let name = document.createElement('h2')
-  name.innerText = toy.name
-  card.appendChild(name)
-}
+  h2.innerHTML = toy.name;
+  img.src = toy.image;
+  img.className = "toy-avatar";
+  p.innerHTML = toy.likes;
+  btn.className = "like-btn";
+  btn.innerHTML = "Like <3";
 
-// img tag with: src of the toy's image // class of "toy-avatar"
-function createPhoto(toy, card) {
-  let img = document.createElement('img')
-  img.src = toy.image
-  img.className = "toy-avatar"
-  card.appendChild(img)
-}
+  card.appendChild(h2);
+  card.appendChild(img);
+  card.appendChild(p);
+  card.appendChild(btn);
 
-// p tag with total likes
-function totalLikes(toy, card) {
-  let likes = document.createElement('p')
-  likes.innerText = `${toy.likes} likes`
-  card.appendChild(likes)
-}
+  collection.appendChild(card);
 
-// button with class="like-btn"
-function addButton(toy, card) {
-  let newButton = document.createElement('button')
-  newButton.addEventListener('click', function() {
-    increaseCount(toy);
-    window.location.reload(true);
+  btn.addEventListener("click", () => {
+    event.preventDefault()
+    const likes = likeToy(toy);
+    p.innerText = likes;
+    // event.target.reset();
   })
-  newButton.className = "like-btn"
-  newButton.style = "width: 30px;height:30px;cursor:pointer;"
-  newButton.innerText = "♥"
-  card.appendChild(newButton)
-}
+};
 
-// Challenge 3 <<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>
-// POST fetch() request sent to http://localhost:3000/toys
-
-form = document.querySelector('.add-toy-form')
-form.addEventListener('submit', submitData)
-
-function submitData() {
-
+function postToy(toy) {
   let formData = {
-    "name": document.querySelectorAll('.input-text')[0].value,
-    "image": document.querySelectorAll('.input-text')[1].value,
-    "likes": "0"
-  }
-
-  let configObj = {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        },
-        body: JSON.stringify(formData)
+    "name": toy.name.value,
+    "image": toy.image.value,
+    "likes": 0
   };
 
+  let configObj = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify(formData)
+  };
+   
   fetch("http://localhost:3000/toys", configObj)
-      .then(response => response.json())
-      .then(json => console.log(json))
-}
+    .then(resp => resp.json())
+    .then(obj => renderToy(obj));
+};
 
-// Challenge 4 <<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>
-function increaseCount(toy) {
-
-
+function likeToy(toy) {
+  let likes = toy.likes;
   let configObj = {
-        method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          "likes": parseInt(toy.likes) + 1
-        })
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({
+      "likes": likes + 1
+    })
   };
 
+  fetch(`http://localhost:3000/toys/${toy.id}`, configObj);
 
-// OR HERE!	  fetch(`http://localhost:3000/toys/${toy.id}`, configObj)
+  return likes+1;
 }
